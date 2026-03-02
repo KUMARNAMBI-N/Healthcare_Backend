@@ -1,0 +1,15 @@
+fastapi[standard]==0.110.0
+uvicorn==0.27.1
+pydantic[email]==2.6.3
+pydantic-settings==2.2.1
+SQLAlchemy==2.0.27
+alembic==1.13.1
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
+redis==5.0.1
+celery==5.3.6
+razorpay==1.4.1
+confluent-kafka==2.3.0
+python-multipart==0.0.9
