@@ -1,8 +1,15 @@
-from sqlalchemy import String, Integer, Float, Boolean, ForeignKey, Text, CheckConstraint, DECIMAL, text
+import enum
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, CheckConstraint, DECIMAL, text, Enum, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 from services.doctor_service.app.db.base_model import BaseModel
+
+
+class ApprovalStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
 
 class Doctor(BaseModel):
     __tablename__ = "doctors"
@@ -22,6 +29,12 @@ class Doctor(BaseModel):
     rating: Mapped[float] = mapped_column(DECIMAL, index=True, server_default=text("0"))
     total_reviews: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    approval_status: Mapped[ApprovalStatus] = mapped_column(
+        Enum(ApprovalStatus, name="approval_status_enum"),
+        default=ApprovalStatus.pending, nullable=False
+    )
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_by: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
 
     __table_args__ = (
         CheckConstraint('experience_years >= 0', name='check_experience_positive'),
@@ -35,6 +48,8 @@ class Doctor(BaseModel):
     languages: Mapped[List["Language"]] = relationship("Language", back_populates="doctor", cascade="all, delete-orphan")
     documents: Mapped[List["Document"]] = relationship("Document", back_populates="doctor", cascade="all, delete-orphan")
     hospitals: Mapped[List["DoctorHospital"]] = relationship("DoctorHospital", back_populates="doctor", cascade="all, delete-orphan")
+    license: Mapped[Optional["DoctorLicense"]] = relationship("DoctorLicense", back_populates="doctor", uselist=False, cascade="all, delete-orphan")
+    kyc: Mapped[Optional["DoctorKYC"]] = relationship("DoctorKYC", back_populates="doctor", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Doctor name='{self.full_name}' email='{self.email}'>"

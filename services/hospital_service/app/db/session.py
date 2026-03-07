@@ -1,28 +1,36 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import exc
-from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from services.hospital_service.app.core.config import settings
 
-from app.config import settings
+engine_kwargs = {
+    "echo": False,
+    "future": True,
+}
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,  # Set to True for debugging SQL queries
-    future=True,
-    pool_size=20,
-    max_overflow=10,
+if "sqlite" not in settings.DATABASE_URL:
+    engine_kwargs.update({
+        "pool_size": 10,
+        "max_overflow": 20
+    })
+
+engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False
 )
 
-async_session_maker = sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
-)
-
-async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_maker() as session:
+async def get_db_session():
+    """
+    Dependency for getting an async database session in FastAPI routes.
+    """
+    async with AsyncSessionLocal() as session:
         try:
             yield session
-        except exc.SQLAlchemyError as e:
+            await session.commit()
+        except Exception:
             await session.rollback()
-            raise e
+            raise
         finally:
             await session.close()

@@ -10,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.doctor_service.app.core.config import settings
 from services.doctor_service.app.api.v1 import doctor_routes
 from services.doctor_service.app.api.v1 import specialization_routes
+from services.doctor_service.app.api.v1 import license_routes
+from services.doctor_service.app.api.v1 import kyc_routes
 
 app = FastAPI(
     title=settings.PROJECT_NAME + " - Doctor Service",
@@ -28,5 +30,7 @@ app.add_middleware(
 def root():
     return {"message": "Welcome to the Doctor Service"}
 
+app.include_router(license_routes.router, prefix=f"{settings.API_V1_STR}/doctors", tags=["License & Approval"])
+app.include_router(kyc_routes.router, prefix=f"{settings.API_V1_STR}/doctors", tags=["KYC Verification"])
 app.include_router(doctor_routes.router, prefix=f"{settings.API_V1_STR}/doctors", tags=["Doctors"])
 app.include_router(specialization_routes.router, prefix=f"{settings.API_V1_STR}/specializations", tags=["Specializations"])
